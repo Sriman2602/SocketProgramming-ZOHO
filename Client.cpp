@@ -35,7 +35,6 @@ void Send() {
     cout << "TO BE SENT: ";
     cin >> sen;
     strcpy_s(sendbuf, sen.c_str());
-    cin.get(sendbuf, strlen(sendbuf));
     cout << "SENDBUF: " << sendbuf;
     iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
     cout << "Sent: " << sen << endl;
