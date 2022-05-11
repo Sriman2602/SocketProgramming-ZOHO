@@ -12,22 +12,42 @@ using namespace std;
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
 
+WSADATA wsaData;
+SOCKET ConnectSocket = INVALID_SOCKET;
+struct addrinfo* result = NULL,
+    * ptr = NULL,
+    hints;
+char sendbuf[DEFAULT_BUFLEN];
+char recvbuf[DEFAULT_BUFLEN];
+int iResult;
+int recvbuflen = DEFAULT_BUFLEN;
+char sen[50];
+
+void Send() {
+    cout << "TO BE SENT: ";
+    cin.getline(sen, sizeof sen);
+    strcpy_s(sendbuf, sen);
+    cout << "SENDBUF: " << sendbuf;
+    iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
+    printf("Sent: %s\n", sen);
+}
+
+void Receive() {
+    iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+    if (iResult > 0) {
+        cout << "Received: ";
+        for (int i = 0; i < iResult; i++)
+            cout << recvbuf[i];
+        cout << endl;
+    }
+}
+
 int main(int argc, char** argv)
 {
-    WSADATA wsaData;
-    SOCKET ConnectSocket = INVALID_SOCKET;
-    struct addrinfo* result = NULL,
-        * ptr = NULL,
-        hints;
-    char recvbuf[DEFAULT_BUFLEN];
-    int iResult;
-    int recvbuflen = DEFAULT_BUFLEN;
-    char sen[50];
-
+    
     // Validate the parameters
     if (argc != 2) {
         cout << "usage: " << argv[0] << "server - name\n";
@@ -87,20 +107,8 @@ int main(int argc, char** argv)
     // Send an initial buffer
 
     while (TRUE) {
-
-        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) {
-            cout << "Received: ";
-            for (int i = 0; i < iResult; i++)
-                cout << recvbuf[i];
-            cout << endl;
-        }
-     
-        cin.getline(sen, sizeof sen);
-        const char* sendbuf = sen;
-        iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-        printf("Sent: %s\n", sen);
-
+        Receive();
+        Send();
     }
     return 0;
 }
