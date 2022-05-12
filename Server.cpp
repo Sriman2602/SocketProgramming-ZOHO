@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include<string>
 
 using namespace std;
 #pragma comment (lib, "Ws2_32.lib")
@@ -28,15 +29,40 @@ char recvbuf[DEFAULT_BUFLEN];
 int recvbuflen = DEFAULT_BUFLEN;
 char userpass[50];
 
-void ServerRecSend(SOCKET S,SOCKET D, char recvbuf[50], int recvbuflen) {
+void ServerRecSend(SOCKET S,SOCKET D) {
+	string line, statement;
+	int j = 0;
+	fstream fout;
 	iResult = recv(S, recvbuf, recvbuflen, 0);
-	cout << "RECEIVED: ";
+	cout << "RECEIVED "<<endl;
 	if (recvbuf[0] == '$') {//USER CREATION and Storing Details.
 		cout << "FILE TO BE STORED:";
-		for (int i = 0; i < iResult; i++)
-			cout<<recvbuf[i];
-		cout << endl;
+		fout.open("USER.txt", ios::app);
+		for (int i = 2; i < iResult; i++) {
+			statement += recvbuf[i];
+		}
+		fout << statement << endl;
+		fout.close();
 		send(S, "USER CREATED", 13, 0);
+		return;
+	}
+	if (recvbuf[0] == '#') {//USER LOGIN.
+		cout << "TO BE CHECKED";
+		string state; int flag = 1;
+		for (int i = 2; i < iResult; i++)
+			state += recvbuf[i];
+		fout.open("USER.txt", ios::in);
+		while (fout) {
+			getline(fout, line);
+			if (line == state) {
+				send(S, "WELCOME", 7, 0);
+				flag = 0;
+				break;
+			}
+		}
+		if (flag == 1) {
+			send(S,"WRONG USERNAME AND PASSWORD",28,0);
+		}
 		return;
 	}
 	if (iResult > 0) {
@@ -126,10 +152,12 @@ int main()
 	}
 	// No longer need server socket
 	closesocket(ListenSocket);
-	ServerRecSend(ClientSocket, ClientSocket1, recvbuf, recvbuflen);//USER ACCEPTING.
+
+	//ServerRecSend(ClientSocket, ClientSocket1);//USER ACCEPTING.
+	//ServerRecSend(ClientSocket1, ClientSocket);//USER ACCEPTING.
 	do{
-		ServerRecSend(ClientSocket, ClientSocket1, recvbuf, recvbuflen);
-		ServerRecSend(ClientSocket1, ClientSocket, recvbuf, recvbuflen);
+		ServerRecSend(ClientSocket, ClientSocket1);
+		ServerRecSend(ClientSocket1, ClientSocket);
 	} while (TRUE);
 	return 0;
 }
