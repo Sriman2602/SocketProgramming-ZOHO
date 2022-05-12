@@ -3,16 +3,22 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include<string>
 #include <stdlib.h>
 #include <iostream>
 using namespace std;
+
+struct newAccount {
+    string name;
+    string pwd;
+}n;
 
 // Need to link with Ws2_32.lib, Mswsock.lib, and Advapi32.lib
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-#define DEFAULT_BUFLEN 512
+#define DEFAULT_BUFLEN 50
 #define DEFAULT_PORT "27015"
 
 WSADATA wsaData;
@@ -24,15 +30,16 @@ char sendbuf[DEFAULT_BUFLEN];
 char recvbuf[DEFAULT_BUFLEN];
 int iResult;
 int recvbuflen = DEFAULT_BUFLEN;
-char sen[50];
+string sen;
+char user[50];
 
 void Send() {
-    cout << "TO BE SENT: ";
-    cin.getline(sen, sizeof sen);
-    strcpy_s(sendbuf, sen);
-    cout << "SENDBUF: " << sendbuf;
+    cout << "SENT: ";
+    //cin >> sen;
+    std::getline(std::cin >> std::ws, sen);
+    strcpy_s(sendbuf, sen.c_str());
+    //cin.get(sendbuf, strlen(sendbuf));
     iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-    printf("Sent: %s\n", sen);
 }
 
 void Receive() {
@@ -45,9 +52,42 @@ void Receive() {
     }
 }
 
+void ACC_creation() {
+    string str;
+    cout << "Enter Personal Details\n";
+    cout << "Name: ";
+    cin >> n.name;
+    cout << "Password: ";
+    cin >> n.pwd;
+    str = "$ " + n.name + '_' + n.pwd;
+    strcpy_s(user, str.c_str());
+    send(ConnectSocket, user, strlen(user), 0);
+    cout << "Sent: " << user <<endl;
+    iResult = recv(ConnectSocket, recvbuf, recvbuflen,0);
+    for (int i = 0; i < iResult; i++)
+        cout << recvbuf[i];
+    cout << endl;
+}
+
+void Login() {
+    string log; char login[DEFAULT_BUFLEN];
+    cout << "LOGIN: ";
+    cin >> n.name;
+    cout << "PASSWORD: ";
+    cin >> n.pwd;
+    log = "# " + n.name + '_' + n.pwd;
+    cout << "Sent: " << log << endl;;
+    strcpy_s(login, log.c_str());
+    send(ConnectSocket, login, strlen(login), 0);
+    iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+    for (int i = 0; i < iResult; i++)
+        cout << recvbuf[i];
+    cout << endl;
+}
+
 int main(int argc, char** argv)
 {
-    
+    char ch;
     // Validate the parameters
     if (argc != 2) {
         cout << "usage: " << argv[0] << "server - name\n";
@@ -84,7 +124,7 @@ int main(int argc, char** argv)
             printf("socket failed with error: %ld\n", WSAGetLastError());
             WSACleanup();
             return 1;
-        }
+        }           
 
         // Connect to server.
         iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
@@ -103,9 +143,24 @@ int main(int argc, char** argv)
         WSACleanup();
         return 1;
     }
-
-    // Send an initial buffer
-
+    cout << "ENTER your Choice [l(login),n(new user)] : ";
+    cin >> ch;
+    switch(ch) {
+    case 'l': {
+        Login();
+        break;
+        }
+    case 'n': {
+        ACC_creation();
+        break;
+    }
+    default: {
+        cout << "WRONG CHOICE:";
+        return 5;
+    }
+    }
+    Sleep(200);
+    system("cls");
     while (TRUE) {
         Receive();
         Send();
