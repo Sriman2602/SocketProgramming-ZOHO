@@ -3,9 +3,11 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include<string>
 #include <stdlib.h>
 #include <iostream>
 using namespace std;
+
 struct newAccount {
     string name;
     string pwd;
@@ -32,12 +34,12 @@ string sen;
 char user[50];
 
 void Send() {
-    cout << "TO BE SENT: ";
-    cin >> sen;
+    cout << "SENT: ";
+    //cin >> sen;
+    std::getline(std::cin >> std::ws, sen);
     strcpy_s(sendbuf, sen.c_str());
-    cout << "SENDBUF: " << sendbuf;
+    //cin.get(sendbuf, strlen(sendbuf));
     iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-    cout << "Sent: " << sen << endl;
 }
 
 void Receive() {
@@ -67,9 +69,25 @@ void ACC_creation() {
     cout << endl;
 }
 
+void Login() {
+    string log; char login[DEFAULT_BUFLEN];
+    cout << "LOGIN: ";
+    cin >> n.name;
+    cout << "PASSWORD: ";
+    cin >> n.pwd;
+    log = "# " + n.name + '_' + n.pwd;
+    cout << "Sent: " << log<<endl;
+    strcpy_s(login, log.c_str());
+    send(ConnectSocket, login, strlen(login), 0);
+    iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+    for (int i = 0; i < iResult; i++)
+        cout << recvbuf[i];
+    cout << endl;
+}
+
 int main(int argc, char** argv)
 {
-
+    char ch;
     // Validate the parameters
     if (argc != 2) {
         cout << "usage: " << argv[0] << "server - name\n";
@@ -125,8 +143,26 @@ int main(int argc, char** argv)
         WSACleanup();
         return 1;
     }
-    
-    ACC_creation();
+    cout << "ENTER your Choice [l(login),n(new user)] : ";
+    cin >> ch;
+    switch(ch) {
+    case 'l': {
+        Login();
+        break;
+        }
+    case 'n': {
+        ACC_creation();
+        break;
+    }
+    default: {
+        cout << "WRONG CHOICE:";
+        return 5;
+    }
+    }
+    //ACC_creation();
+    //Login();
+    Sleep(200);
+    //system("cls");
     while (TRUE) {
         Send();
         Receive();
